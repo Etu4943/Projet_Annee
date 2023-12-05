@@ -202,7 +202,7 @@ def make_move(tetraminos,shape,grid,size):
     location_x = tetramino[2][0]
     location_y = tetramino[2][1]
     move = getkey()
-    while not (move == 'v' and check_move(tetramino,grid)):
+    while move != 'v' :
         gap = x,y = tetramino[2]
         match move :
             case 'i':
