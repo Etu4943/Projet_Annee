@@ -1,4 +1,5 @@
 import sys,os
+from os import name as OS_NAME
 from getkey import getkey
 
 POSITION_INDEX = 0
@@ -9,6 +10,7 @@ X_INDEX = 0
 Y_INDEX = 1
 CLEAR_SCREEN = os.system("clear")
 EXPECTED_MOVE = ["i","k","j","l","o","u","v"]
+CLEAR_COMMAND = 'cls' if OS_NAME=='nt' else 'clear'
 
 def get_w_and_h(grid):
     return (len(grid[0])-2)//3,(len(grid)-2)//3
@@ -31,14 +33,6 @@ def center_corner(grid):
 
 def count_empty_cells(grid):
     return sum(1 for line in grid for cell in line if cell == "  ")
-
-def copy(tetramino):
-    new_liste = []
-    for pos in tetramino :
-        new_liste.append(pos)
-    return new_liste
-    
-    
 
 def create_grid(w,h):
     grid = [["  " for _ in range(3*w+2)] for _ in range(3*h+2)]
@@ -119,24 +113,25 @@ def rotate_tetramino(tetramino,clockwise = True):
         x,y = tetramino[POSITION_INDEX][i][0],tetramino[POSITION_INDEX][i][1]
         tetramino[POSITION_INDEX][i] = (-y,x) if clockwise else (y,-x)
     return tetramino
-    
-
+def remove_num(str):
+    if "XX" not in str:
+        index = str.find(" ") - 1
+        str = list(str)
+        str[index] = " "
+    return ''.join(str)
 def print_grid(grid, no_number):
-    #os.system("clear")
+    os.system(CLEAR_COMMAND)
     print("--" * (len(grid[0])+1))
     for i in range(len(grid)) :
         print("|",end="")
         for j in range(len(grid[0])):
-            if no_number :
-                print(grid[i][j],end="")
+            if not no_number and "\x1b" in grid[i][j]:
+                str = remove_num(grid[i][j])
+                print(str, end="")
             else :
-                pass
+                print(grid[i][j],end="")
         print("|")
     print("--" * (len(grid[0])+1))
-
-def display_tetra(grid):
-    for line in grid :
-        print(line)
 
 def check_move(tetramino, grid):
     is_valid = True
@@ -184,10 +179,6 @@ def is_int(choice):
     except :
         is_ok = False
     return is_ok
-
-def ask_input():
-    pass
-
 def choose_shape(nb_shapes):
     choice = getkey()
     while  not is_int(choice) or int(choice) < 1 or int(choice) > nb_shapes :
@@ -212,8 +203,6 @@ def is_out_of_bounds(tetramino,grid):
 
 def make_move(tetraminos,shape,grid,nb_empty_cells):
     tetramino = tetraminos[shape-1]
-    location_x = tetramino[2][0]
-    location_y = tetramino[2][1]
     move = getkey()
     wanna_play = True
     while wanna_play :
@@ -246,7 +235,7 @@ def make_move(tetraminos,shape,grid,nb_empty_cells):
         if (0 <= min_x + gap[0] and max_x + gap[0] < len(grid[0])) and (0 <= min_y + gap[1] and max_y + gap[1] < len(grid) ):
             tetramino[2] = gap
             place_tetraminos(tetraminos,grid)
-            print_grid(grid,True)
+            print_grid(grid,False)
         if wanna_play :
             move = getkey()
     return None
@@ -262,8 +251,8 @@ def main():
     nb_empty_cells = count_empty_cells(grid)
     print("nb empty : ", nb_empty_cells)
     print(f"Nombres de pièces : {nb_pieces}")
-    print_grid(grid,True)
     while not check_win(grid):
+        print_grid(grid, True)
         shape = choose_shape(nb_pieces)
         print(f"Vous jouez avec la pièce n°{shape}")
         move = make_move(tetraminos,shape,grid,nb_empty_cells)
