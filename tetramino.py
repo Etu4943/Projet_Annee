@@ -21,8 +21,6 @@ GAP_INDEX = 2
 FIRST_ELEMENT = 0
 X_INDEX = 0
 Y_INDEX = 1
-CLEAR_SCREEN = os.system("clear")
-EXPECTED_MOVE = ["i","k","j","l","o","u","v"]
 CLEAR_COMMAND = 'cls' if os.name=='nt' else 'clear'
 RED = 31
 GREEN = 32
@@ -106,25 +104,22 @@ def place_tetraminos(tetraminos,grid):
     empty_grid(grid)
     nb_shapes = 0
     for shape in tetraminos :
+        gap_x,gap_y = shape[GAP_INDEX]
         for x,y in shape[POSITION_INDEX] :
-            x,y = y + shape[GAP_INDEX][Y_INDEX],x + shape[GAP_INDEX][X_INDEX] #Inversion de l'axe x et y
-            if(grid[x][y] != "  "):
-                grid[x][y] = get_colored_text("XX",shape[COLOR_INDEX])
-            else:
-                grid[x][y] = get_colored_text(f"{nb_shapes+1} ",shape[COLOR_INDEX])
+            grid[y + gap_y][x + gap_x] = get_colored_text("XX" if grid[y + gap_y][x + gap_x] != "  " else f"{nb_shapes+1} ",shape[COLOR_INDEX])
         nb_shapes += 1
     return grid
 
 def setup_tetraminos(tetraminos,grid):
     w,h = get_w_and_h(grid)
-    nb_shapes = 0
     for shape in tetraminos :
+        nb_shapes = tetraminos.index(shape)
         if nb_shapes == 4 :
             x,y = (nb_shapes // 3)*(h+1),2*(w+1)
         else :
             x,y = ((nb_shapes+ ( 1 if nb_shapes > 4 else 0) ) // 3)*(h+1),((nb_shapes - (2 if nb_shapes > 4 else 0)) % 3)*(w+1)
         shape[GAP_INDEX] = (y,x)
-        nb_shapes += 1
+        
     grid = place_tetraminos(tetraminos,grid)
     return grid,tetraminos
 
@@ -169,14 +164,13 @@ def check_move(tetramino, grid):
 
 
 def check_win(grid):
-    win = True
     w,h = get_w_and_h(grid)
     somme = 0
     for i in range(len(grid)) :
         for j in range(len(grid[0])):
             if (j > w and j < 2*w+1 and i > h and i < 2*h+1) and grid[i][j] != "  ":
                 somme += 1             
-    return somme == w*h
+    return somme == w * h
 
 def is_int(choice):
     try:
@@ -233,6 +227,8 @@ def make_move(tetraminos,shape,grid):
                     bad_emplacement = True
             case "x" | 120:
                 return "x"
+            case _ :
+                None
 
         if not is_out_of_bounds(tetramino,gap,grid):
             tetramino[GAP_INDEX] = gap
@@ -265,6 +261,7 @@ def main():
     move = tour(grid,tetraminos,nb_pieces,True)
     while not check_win(grid) and move != "x" :
         move = tour(grid,tetraminos,nb_pieces)
-    print(get_colored_text("Vous avez réussi l'énigme du Tetramino. Félicitations !",GREEN))
+    
+    print(get_colored_text("Vous avez résolu l'énigme du Tetramino. Félicitations !",GREEN))
 if __name__ == "__main__":
     main()
