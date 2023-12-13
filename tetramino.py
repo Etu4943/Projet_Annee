@@ -1,5 +1,16 @@
+###########################################
+#                                         #
+#               Tetraminos                #
+#        INFO-106 : Projet d'info.        #
+#        Projet : Decembre 2023           #
+#        Auteur : Clément Potier          #
+#        Matricule : 000540561            #
+#                                         #
+###########################################
+
+__author__ = "Potier Clément, mat.000540561"
+
 import sys,os
-from os import name as OS_NAME
 from enum import Enum
 from getkey import getkey
 
@@ -12,7 +23,7 @@ X_INDEX = 0
 Y_INDEX = 1
 CLEAR_SCREEN = os.system("clear")
 EXPECTED_MOVE = ["i","k","j","l","o","u","v"]
-CLEAR_COMMAND = 'cls' if OS_NAME=='nt' else 'clear'
+CLEAR_COMMAND = 'cls' if os.name=='nt' else 'clear'
 RED = 31
 GREEN = 32
 Cote = Enum("Cote",["HAUT","GAUCHE","DROITE","BAS"])
@@ -108,12 +119,10 @@ def setup_tetraminos(tetraminos,grid):
     w,h = get_w_and_h(grid)
     nb_shapes = 0
     for shape in tetraminos :
-        if nb_shapes < 4 :
-            x,y = (nb_shapes // 3)*(h+1),(nb_shapes % 3)*(w+1)
-        elif nb_shapes == 4 :
+        if nb_shapes == 4 :
             x,y = (nb_shapes // 3)*(h+1),2*(w+1)
         else :
-            x,y = ((nb_shapes+1) // 3)*(h+1),((nb_shapes-2) % 3)*(w+1)
+            x,y = ((nb_shapes+ ( 1 if nb_shapes > 4 else 0) ) // 3)*(h+1),((nb_shapes - (2 if nb_shapes > 4 else 0)) % 3)*(w+1)
         shape[GAP_INDEX] = (y,x)
         nb_shapes += 1
     grid = place_tetraminos(tetraminos,grid)
@@ -126,12 +135,14 @@ def rotate_tetramino(tetramino,clockwise = True):
         x,y = tetramino[POSITION_INDEX][i][X_INDEX],tetramino[POSITION_INDEX][i][Y_INDEX]
         tetramino[POSITION_INDEX][i] = (-y,x) if clockwise else (y,-x)
     return tetramino
+
 def remove_num(str):
     if "XX" not in str:
         index = str.find(" ") - 1
         str = list(str)
         str[index] = " "
     return ''.join(str)
+
 def print_grid(grid, no_number):
     os.system(CLEAR_COMMAND)
     print("--" * (len(grid[0])+1))
@@ -182,19 +193,10 @@ def choose_shape(nb_shapes):
         choice = getkey()
     return int(choice)
 
-def get_extreme_locations(tetramino):
-    positions = tetramino[0]
-    min_x_value = min(elem[0] for elem in positions)
-    max_x_value = max(elem[0] for elem in positions)
-    min_y_value = min(elem[1] for elem in positions)
-    max_y_value = max(elem[1] for elem in positions)
-    return min_x_value, max_x_value, min_y_value, max_y_value
-
-def is_out_of_bounds(tetramino,grid):
+def is_out_of_bounds(tetramino,gap,grid):
     is_out = False
-    gap = tetramino[GAP_INDEX]
     for x,y in tetramino[POSITION_INDEX] :
-        if not (0 <= x + gap[0] < len(grid[0])) or not (0 <= y + gap[1] < (len(grid))):
+        if not (0 <= x + gap[X_INDEX] < len(grid[0])) or not (0 <= y + gap[Y_INDEX] < (len(grid))):
             is_out = True
     return is_out
 
@@ -204,6 +206,7 @@ def make_move(tetraminos,shape,grid):
     move = getkey()
     placed = False
     bad_emplacement = False
+    
     while not placed :
         gap = x,y = tetramino[GAP_INDEX]
         match move[0] :
@@ -217,11 +220,11 @@ def make_move(tetraminos,shape,grid):
                 gap = (x+1,y)
             case 'o' | 111:
                 rotate_tetramino(tetramino)
-                if is_out_of_bounds(tetramino,grid):
+                if is_out_of_bounds(tetramino,gap,grid):
                     rotate_tetramino(tetramino,False)
             case 'u' | 117:
                 rotate_tetramino(tetramino,False)
-                if is_out_of_bounds(tetramino,grid):
+                if is_out_of_bounds(tetramino,gap,grid):
                     rotate_tetramino(tetramino)
             case 'v' | 118 :
                 if check_move(tetramino,grid) :
@@ -231,8 +234,7 @@ def make_move(tetraminos,shape,grid):
             case "x" | 120:
                 return "x"
 
-        min_x,max_x,min_y,max_y = get_extreme_locations(tetramino)
-        if (0 <= min_x + gap[X_INDEX] and max_x + gap[X_INDEX] < len(grid[X_INDEX])) and (0 <= min_y + gap[Y_INDEX] and max_y + gap[Y_INDEX] < len(grid) ):
+        if not is_out_of_bounds(tetramino,gap,grid):
             tetramino[GAP_INDEX] = gap
             place_tetraminos(tetraminos,grid)
             print_grid(grid,False)
@@ -263,5 +265,6 @@ def main():
     move = tour(grid,tetraminos,nb_pieces,True)
     while not check_win(grid) and move != "x" :
         move = tour(grid,tetraminos,nb_pieces)
+    print(get_colored_text("Vous avez réussi l'énigme du Tetramino. Félicitations !",GREEN))
 if __name__ == "__main__":
     main()
