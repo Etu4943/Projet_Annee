@@ -11,9 +11,14 @@ Y_INDEX = 1
 CLEAR_SCREEN = os.system("clear")
 EXPECTED_MOVE = ["i","k","j","l","o","u","v"]
 CLEAR_COMMAND = 'cls' if OS_NAME=='nt' else 'clear'
+RED = 31
+GREEN = 32
 
 def get_w_and_h(grid):
     return (len(grid[0])-2)//3,(len(grid)-2)//3
+
+def get_colored_text(text,color):
+    return f"\x1b[{color}m{text}\x1b[0m"
 
 def place_square(grid):
     w,h = get_w_and_h(grid)
@@ -81,17 +86,13 @@ def place_tetraminos(tetraminos,grid):
         for x,y in shape[POSITION_INDEX] :
             x,y = y + shape[GAP_INDEX][1],x + shape[GAP_INDEX][0] #Inversion de l'axe x et y
             if(grid[x][y] != "  "):
-                grid[x][y] = f"\x1b[{shape[COLOR_INDEX]}mXX\x1b[0m"
+                grid[x][y] = get_colored_text("XX",shape[COLOR_INDEX])
             else:
-                #grid[x][y] = f"\x1b[{shape[COLOR_INDEX]}m  \x1b[0m"
-                grid[x][y] = f"\x1b[{shape[COLOR_INDEX]}m{nb_shapes+1} \x1b[0m"
+                grid[x][y] = get_colored_text(f"{nb_shapes+1} ",shape[COLOR_INDEX])
         nb_shapes += 1
     return grid
 
 def setup_tetraminos(tetraminos,grid):
-    """
-    \x1b[’ + code_couleur + ’m’ + texte + ’\x1b[0m
-    """
     w,h = get_w_and_h(grid)
     nb_shapes = 0
     for shape in tetraminos :
@@ -135,15 +136,12 @@ def print_grid(grid, no_number):
 
 def check_move(tetramino, grid):
     is_valid = True
-    x, y = tetramino[POSITION_INDEX][FIRST_ELEMENT]
-    x, y = x + tetramino[GAP_INDEX][X_INDEX], y + tetramino[GAP_INDEX][Y_INDEX]
-    reference = grid[y][x]
-    i = 1
-    while is_valid and i < len(tetramino[POSITION_INDEX]):
-        x,y = tetramino[POSITION_INDEX][i]
-        x, y = x + tetramino[GAP_INDEX][X_INDEX], y + tetramino[GAP_INDEX][Y_INDEX]
-        is_valid = reference == grid[y][x]
-        i += 1
+    for x,y in tetramino[POSITION_INDEX] :
+        x = x + tetramino[GAP_INDEX][X_INDEX]
+        y = y + tetramino[GAP_INDEX][Y_INDEX]
+        if "XX" in grid[y][x] :
+            is_valid = False
+    
     return is_valid
 
 def remplire(grid):
@@ -160,6 +158,8 @@ def remplire(grid):
     shape.append((0, 0))
     tetraminos.append(shape)
     place_tetraminos(tetraminos,grid)
+
+
 
 
 def check_win(grid):
@@ -180,6 +180,7 @@ def is_int(choice):
         is_ok = False
     return is_ok
 def choose_shape(nb_shapes):
+    print("Veuillez choisir une pièce : ")
     choice = getkey()
     while  not is_int(choice) or int(choice) < 1 or int(choice) > nb_shapes :
         choice = getkey()
@@ -201,15 +202,16 @@ def is_out_of_bounds(tetramino,grid):
             is_out = True
     return is_out
 
-def make_move(tetraminos,shape,grid,nb_empty_cells):
+def make_move(tetraminos,shape,grid):
     tetramino = tetraminos[shape-1]
+    print(f"Vous jouez avec la pièce {get_colored_text(f'n° {shape}',tetramino[COLOR_INDEX])} - (v pour verouiller l'emplacement)")
     move = getkey()
     wanna_play = True
+    bad_emplacement = False
     while wanna_play :
         gap = x,y = tetramino[2]
         match move[0] :
             case 'i' | 105 :
-                print("i")
                 gap = (x,y-1)
             case 'k' | 107:
                 gap = (x,y+1)
@@ -226,8 +228,10 @@ def make_move(tetraminos,shape,grid,nb_empty_cells):
                 if is_out_of_bounds(tetramino,grid):
                     rotate_tetramino(tetramino)
             case 'v' | 118 :
-                print(check_move(tetramino,grid))
-                wanna_play = False if check_move(tetramino,grid) else True
+                if check_move(tetramino,grid) :
+                    wanna_play = False
+                else :
+                    bad_emplacement = True
             case "x" | 120:
                 return "x"
 
@@ -236,27 +240,34 @@ def make_move(tetraminos,shape,grid,nb_empty_cells):
             tetramino[2] = gap
             place_tetraminos(tetraminos,grid)
             print_grid(grid,False)
+            print(f"Vous jouez avec la pièce {get_colored_text(f'n° {shape}',tetramino[COLOR_INDEX])} - (v pour verouiller l'emplacement)")
+            if bad_emplacement :
+                print(get_colored_text("Verouillage impossible. Emplacement non valide.",RED))
+                bad_emplacement = False
         if wanna_play :
             move = getkey()
     return None
-    
+
+def tour(grid,tetraminos,nb_pieces,is_first_round=False):
+    print_grid(grid, True)
+    if not is_first_round :
+        print(get_colored_text("Vous avez vérouillé l'emplacement.",GREEN))
+    shape = choose_shape(nb_pieces)
+    print_grid(grid,False)
+    move = make_move(tetraminos,shape,grid)
+    return move
 
 def main():
     carte = sys.argv[1]
-    #carte = "carte_1.txt"
     size, tetraminos = import_card(carte)
     grid = create_grid(*size)
     nb_pieces = len(tetraminos)
     setup_tetraminos(tetraminos,grid)
     nb_empty_cells = count_empty_cells(grid)
-    print("nb empty : ", nb_empty_cells)
-    print(f"Nombres de pièces : {nb_pieces}")
-    while not check_win(grid):
-        print_grid(grid, True)
-        shape = choose_shape(nb_pieces)
-        print(f"Vous jouez avec la pièce n°{shape}")
-        move = make_move(tetraminos,shape,grid,nb_empty_cells)
-        print("Vous avez vérouillé l'emplacement.")
+    
+    move = tour(grid,tetraminos,nb_pieces,True)
+    while not check_win(grid) and move != "x" :
+        move = tour(grid,tetraminos,nb_pieces)
         if move == "x":
             break
 if __name__ == "__main__":
