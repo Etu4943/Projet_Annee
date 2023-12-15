@@ -14,7 +14,6 @@ import sys,os
 from enum import Enum
 from getkey import getkey
 
- 
 POSITION_INDEX = 0
 COLOR_INDEX = 1
 GAP_INDEX = 2
@@ -24,6 +23,7 @@ Y_INDEX = 1
 CLEAR_COMMAND = 'cls' if os.name=='nt' else 'clear'
 RED = 31
 GREEN = 32
+INITIAL_GAP = (0,0)
 Cote = Enum("Cote",["HAUT","GAUCHE","DROITE","BAS"])
 
 
@@ -68,33 +68,24 @@ def create_grid(w,h):
     return grid
 
 
+
 def import_card(file_path):
     with open(file_path,'r',encoding="utf-8") as file :
-        board = file.readline()
-        doc = file.readlines()
-    size = board.strip().split(",")
+        first_line = file.readline()
+        shapes_lines = file.readlines()
+    size = first_line.strip().split(",")
     w,h = int(size[0]),int(size[1])
     shapes = []
-    for line in doc :
-        shape = []
-        positions = []
-        elements = line.strip().split(";")
-        i = 0 
-        while elements[i] != "":
-            coordinate = elements[i][1:-1].strip().split(",")
-            x,y = int(coordinate[X_INDEX]),int(coordinate[Y_INDEX])
-            positions.append((x,y))
-            i += 1
-        shape.append(positions)
-        shape.append(";".join([i for i in elements[-3:]]))
-        shape.append((0,0))
-        shapes.append(shape)
-        
+    for line in shapes_lines :
+        coordinates, color = line.strip().split(";;")
+        coordinates = coordinates.strip().split(";")
+        positions = [(int(coo[1]),int(coo[4])) for coo in coordinates]
+        shapes.append([positions,color,INITIAL_GAP])
     return ((w,h),shapes)
 
 def empty_grid(grid):
     for i in range(len(grid)):
-        for j in range(len(grid[0])):
+        for j in range(len(grid[FIRST_ELEMENT])):
             if not "|" in grid[i][j] and not "-" in grid[i][j]:
                 grid[i][j] = "  "
     place_square(grid)
@@ -131,26 +122,29 @@ def rotate_tetramino(tetramino,clockwise = True):
         tetramino[POSITION_INDEX][i] = (-y,x) if clockwise else (y,-x)
     return tetramino
 
-def remove_num(str):
-    if "XX" not in str:
-        index = str.find(" ") - 1
-        str = list(str)
-        str[index] = " "
-    return ''.join(str)
+def remove_num(text):
+    if "XX" not in text:
+        index = text.find(" ") - 1
+        text = list(text)
+        text[index] = " "
+    return ''.join(text)
+
+def print_dashed_line(length):
+    print("--" * length)
 
 def print_grid(grid, no_number):
     os.system(CLEAR_COMMAND)
-    print("--" * (len(grid[0])+1))
+    print_dashed_line(len(grid[FIRST_ELEMENT])+1)
     for i in range(len(grid)) :
         print("|",end="")
-        for j in range(len(grid[0])):
+        for j in range(len(grid[FIRST_ELEMENT])):
             if not no_number and "\x1b" in grid[i][j]:
                 str = remove_num(grid[i][j])
                 print(str, end="")
             else :
                 print(grid[i][j],end="")
         print("|")
-    print("--" * (len(grid[0])+1))
+    print_dashed_line(len(grid[FIRST_ELEMENT])+1)
 
 def check_move(tetramino, grid):
     is_valid = True
@@ -167,7 +161,7 @@ def check_win(grid):
     w,h = get_w_and_h(grid)
     somme = 0
     for i in range(len(grid)) :
-        for j in range(len(grid[0])):
+        for j in range(len(grid[FIRST_ELEMENT])):
             if (j > w and j < 2*w+1 and i > h and i < 2*h+1) and grid[i][j] != "  ":
                 somme += 1             
     return somme == w * h
@@ -190,7 +184,7 @@ def choose_shape(nb_shapes):
 def is_out_of_bounds(tetramino,gap,grid):
     is_out = False
     for x,y in tetramino[POSITION_INDEX] :
-        if not (0 <= x + gap[X_INDEX] < len(grid[0])) or not (0 <= y + gap[Y_INDEX] < (len(grid))):
+        if not (0 <= x + gap[X_INDEX] < len(grid[FIRST_ELEMENT])) or not (0 <= y + gap[Y_INDEX] < (len(grid))):
             is_out = True
     return is_out
 
@@ -203,7 +197,7 @@ def make_move(tetraminos,shape,grid):
     
     while not placed :
         gap = x,y = tetramino[GAP_INDEX]
-        match move[0] :
+        match move[FIRST_ELEMENT] :
             case 'i' | 105 :
                 gap = (x,y-1)
             case 'k' | 107:
@@ -263,5 +257,6 @@ def main():
         move = tour(grid,tetraminos,nb_pieces)
     
     print(get_colored_text("Vous avez résolu l'énigme du Tetramino. Félicitations !",GREEN))
+
 if __name__ == "__main__":
     main()
