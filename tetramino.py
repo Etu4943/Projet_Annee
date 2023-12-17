@@ -437,7 +437,6 @@ def tour(grid,tetraminos,nb_pieces,is_first_round=False):
 
 def main():
     carte = sys.argv[1]
-    os.system("MODE 0,50")
     size, tetraminos = import_card(carte)
     grid = create_grid(*size)
     nb_pieces = len(tetraminos)
