@@ -245,7 +245,7 @@ def print_grid(grid, no_number):
     """
     Input :
         grid : matrice du plateau de jeu
-        no_number : 
+        no_number : Booléen selon qu'non veuille les numéros ou non
     Fonctionnement :
         Affiche le plateau de jeu
     Return :
@@ -256,7 +256,7 @@ def print_grid(grid, no_number):
     for i in range(len(grid)) :
         print("|",end="")
         for j in range(len(grid[FIRST_ELEMENT])):
-            if not no_number and "\x1b" in grid[i][j]:
+            if no_number and "\x1b" in grid[i][j]:
                 str = remove_num(grid[i][j])
                 print(str, end="")
             else :
@@ -331,7 +331,7 @@ def is_out_of_bounds(tetramino,gap_x,gap_y,grid):
         gap_X, gap_y : Un déplacement potentiel pour cette pièce
         grid : matrice du plateau de jeu
     Return :
-        is_out : UN booléen désignant si la pièce serait hors-borne ou non
+        is_out : Un booléen désignant si la pièce serait hors-borne ou non
     """
     is_out = False
     for x,y in tetramino[POSITION_INDEX] :
@@ -395,7 +395,7 @@ def make_move(tetraminos,shape,grid):
         if not is_out_of_bounds(tetramino,*gap,grid) and not bad_key:
             tetramino[GAP_INDEX] = gap
             place_tetraminos(tetraminos,grid)
-            print_grid(grid,False)
+            print_grid(grid,True)
             print_commands(grid,shape,tetramino[COLOR_INDEX])
             if bad_emplacement :
                 print(get_colored_text("Verouillage impossible. Emplacement non valide.",RED))
@@ -415,14 +415,13 @@ def tour(grid,tetraminos,nb_pieces,is_first_round=False):
     Return :
         Renvoie le dernier input (x ou v)
     """
-    print_grid(grid, True)
+    print_grid(grid, False)
     if not is_first_round :
         print(get_colored_text("Vous avez vérouillé l'emplacement.",GREEN))
     shape = choose_shape(nb_pieces)
-    print_grid(grid,False)
+    print_grid(grid,True)
     move = make_move(tetraminos,shape,grid)
     return move
-
 
 def main():
     carte = sys.argv[1]
