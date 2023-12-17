@@ -202,33 +202,37 @@ def is_out_of_bounds(tetramino,gap,grid):
             is_out = True
     return is_out
 
+
+def is_game_canceled(move):
+    return move == "x" or move == 120
+
 def make_move(tetraminos,shape,grid):
     tetramino = tetraminos[shape-1]
     print_commands(grid,shape,tetramino[COLOR_INDEX])
-    move = getkey().decode("utf-8")
+    move = getkey()[FIRST_ELEMENT]
     placed = False
     bad_emplacement = False
-    while not placed and (move != "x" and move != 120):
+    while not placed and not is_game_canceled(move):
         bad_key = False
         gap = x,y = tetramino[GAP_INDEX]
         match move :
-            case 'i' :
+            case 'i' | 105 :
                 gap = (x,y-1)
-            case 'k':
+            case 'k' | 107:
                 gap = (x,y+1)
-            case 'j':
+            case 'j' | 106:
                 gap = (x-1,y)
-            case 'l':
+            case 'l' | 108:
                 gap = (x+1,y)
-            case 'o':
+            case 'o' | 111:
                 rotate_tetramino(tetramino)
                 if is_out_of_bounds(tetramino,gap,grid):
                     rotate_tetramino(tetramino,False)
-            case 'u':
+            case 'u' | 117:
                 rotate_tetramino(tetramino,False)
                 if is_out_of_bounds(tetramino,gap,grid):
                     rotate_tetramino(tetramino)
-            case 'v':
+            case 'v' | 118 :
                 if check_move(tetramino,grid) :
                     placed = True
                 else :
@@ -245,7 +249,7 @@ def make_move(tetraminos,shape,grid):
                     print(get_colored_text("Verouillage impossible. Emplacement non valide.",RED))
                     bad_emplacement = False
             if not placed :
-                move = getkey().decode("utf-8")
+                move = getkey()[FIRST_ELEMENT]
     return move
 
 def tour(grid,tetraminos,nb_pieces,is_first_round=False):
@@ -257,6 +261,7 @@ def tour(grid,tetraminos,nb_pieces,is_first_round=False):
     move = make_move(tetraminos,shape,grid)
     return move
 
+
 def main():
     carte = sys.argv[1]
     size, tetraminos = import_card(carte)
@@ -265,10 +270,10 @@ def main():
     setup_tetraminos(tetraminos,grid)
     
     move = tour(grid,tetraminos,nb_pieces,True)
-    while not check_win(grid) and move != "x" :
+    while not check_win(grid) and not is_game_canceled(move) :
         move = tour(grid,tetraminos,nb_pieces)
     
-    end_message = get_colored_text("Partie annulée",RED) if move == "x" else get_colored_text("Vous avez résolu l'énigme du Tetramino. Félicitations !",GREEN)
+    end_message = get_colored_text("Partie annulée",RED) if is_game_canceled(move) else get_colored_text("Vous avez résolu l'énigme du Tetramino. Félicitations !",GREEN)
     print(end_message)
 
 if __name__ == "__main__":
