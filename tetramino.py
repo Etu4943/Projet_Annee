@@ -24,6 +24,7 @@ RED = 31
 GREEN = 32
 INITIAL_GAP = (0,0)
 COMMANDS_COLOR = "38;5;152"
+CHOOSE_NUMBER_COLOR = "38;5;226"
 Cote = Enum("Cote",["HAUT","GAUCHE","DROITE","BAS"])
 
 
@@ -41,6 +42,15 @@ def get_w_and_h(grid):
         Renvoie la longueur et la largeur d'origine
     """
     return (len(grid[FIRST_ELEMENT])-2)//3,(len(grid)-2)//3
+
+def is_game_canceled(move):
+    """
+    Input :
+        move : Un input
+    Return :
+        Renvoie un booleen en fonction de si le joueur à choisi d'arreter la partie
+    """
+    return move == "x" or move == 120
 
 def get_colored_text(text,color):
     """
@@ -220,7 +230,7 @@ def print_dashed_line(length):
     """
     print("--" * length)
 
-def print_commands(grid,shape,color):
+def print_commands(grid,shape,color,choosing_shape = False):
     """
     Input :
         grid : matrice du plateau de jeu
@@ -233,13 +243,12 @@ def print_commands(grid,shape,color):
     """
     length = 2*len(grid[FIRST_ELEMENT])
     print(f" ╔══════╗"," " * (length-9-18),f" ╔═══╗   {get_colored_text("↑",COMMANDS_COLOR)}   ╔═══╗",sep="")
-    print(f" ║{get_colored_text(f'n° {shape}',color)}  ║"," " * (length-9-18),f" ║ U ║ ╔═══╗ ║ O ║",sep="")
-    print(f" ║      ║"," " * (length-9-18),f" ╚═══╝ ║ {get_colored_text("i",COMMANDS_COLOR)} ║ ╚═══╝",sep="")
+    print(f" ║{get_colored_text('CHOOSE',CHOOSE_NUMBER_COLOR)}║" if choosing_shape else f" ║{get_colored_text(f'n° {shape}',color)}  ║"," " * (length-9-18),f" ║ U ║ ╔═══╗ ║ O ║",sep="")
+    print(f" ║{get_colored_text('NUMBER',CHOOSE_NUMBER_COLOR)}║" if choosing_shape else " ║      ║"," " * (length-9-18),f" ╚═══╝ ║ {get_colored_text("i",COMMANDS_COLOR)} ║ ╚═══╝",sep="")
     print(f" ║x:quit║"," " * (length-9-18),f"   ╔═══╬═══╬═══╗",sep="")
     print(f" ║v:lock║"," " * (length-9-18),f" {get_colored_text("←",COMMANDS_COLOR)} ║ {get_colored_text("j",COMMANDS_COLOR)} ║ {get_colored_text("k",COMMANDS_COLOR)} ║ {get_colored_text("l",COMMANDS_COLOR)} ║ {get_colored_text("→",COMMANDS_COLOR)}",sep="")
     print(f" ╚══════╝"," " * (length-9-18),f"   ╚═══╩═══╩═══╝",sep="")
     print(" " * (length-9),f"{get_colored_text("↓",COMMANDS_COLOR)}",sep="")
-
 
 def print_grid(grid, no_number):
     """
@@ -318,11 +327,17 @@ def choose_shape(nb_shapes):
     Return :
         Renvoie le numéro de pièce choisi 
     """
-    print("Veuillez choisir une pièce : ")
     choice = getkey()
-    while  not is_int(choice) or int(choice) < 1 or int(choice) > nb_shapes :
+    stop_game = False
+    while not is_game_canceled(choice[FIRST_ELEMENT]) and not ( is_int(choice) or int(choice) < 1 or int(choice) > nb_shapes) :
         choice = getkey()
-    return int(choice)
+        
+    if is_game_canceled(choice[FIRST_ELEMENT]) :
+        stop_game = True
+        choice = choice[FIRST_ELEMENT]
+    else :
+        choice = int(choice)
+    return choice, stop_game
 
 def is_out_of_bounds(tetramino,gap_x,gap_y,grid):
     """
@@ -340,14 +355,7 @@ def is_out_of_bounds(tetramino,gap_x,gap_y,grid):
     return is_out
 
 
-def is_game_canceled(move):
-    """
-    Input :
-        move : Un input
-    Return :
-        Renvoie un booleen en fonction de si le joueur à choisi d'arreter la partie
-    """
-    return move == "x" or move == 120
+
 
 def make_move(tetraminos,shape,grid):
     """
@@ -402,7 +410,7 @@ def make_move(tetraminos,shape,grid):
                 bad_emplacement = False
         if not placed :
             move = getkey()[FIRST_ELEMENT]
-    return move
+    return is_game_canceled(move)
 
 def tour(grid,tetraminos,nb_pieces,is_first_round=False):
     """
@@ -413,15 +421,18 @@ def tour(grid,tetraminos,nb_pieces,is_first_round=False):
     Fonctionnement :
         affichage de la grille, demande de la pièce, déplacement
     Return :
-        Renvoie le dernier input (x ou v)
+        Renvoie si le joueur souhaite continuer ou non
     """
     print_grid(grid, False)
+    print_commands(grid,None,None,True)
     if not is_first_round :
         print(get_colored_text("Vous avez vérouillé l'emplacement.",GREEN))
-    shape = choose_shape(nb_pieces)
-    print_grid(grid,True)
-    move = make_move(tetraminos,shape,grid)
-    return move
+    shape, stop_game = choose_shape(nb_pieces)
+    if not stop_game:
+        print_grid(grid,True)
+        stop_game = make_move(tetraminos,shape,grid)
+        
+    return stop_game
 
 def main():
     carte = sys.argv[1]
@@ -430,11 +441,11 @@ def main():
     nb_pieces = len(tetraminos)
     setup_tetraminos(tetraminos,grid)
     
-    move = tour(grid,tetraminos,nb_pieces,True)
-    while not check_win(grid) and not is_game_canceled(move) :
-        move = tour(grid,tetraminos,nb_pieces)
+    stop_game = tour(grid,tetraminos,nb_pieces,True)
+    while not check_win(grid) and not stop_game :
+        stop_game = tour(grid,tetraminos,nb_pieces)
     
-    end_message = get_colored_text("Partie annulée",RED) if is_game_canceled(move) else get_colored_text("Vous avez résolu l'énigme du Tetramino. Félicitations !",GREEN)
+    end_message = get_colored_text("Partie annulée",RED) if stop_game else get_colored_text("Vous avez résolu l'énigme du Tetramino. Félicitations !",GREEN)
     print(end_message)
 
 if __name__ == "__main__":
