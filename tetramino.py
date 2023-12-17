@@ -20,13 +20,18 @@ GAP_INDEX = 2
 FIRST_ELEMENT = 0
 X_INDEX = 0
 Y_INDEX = 1
-CLEAR_COMMAND = 'cls' if os.name=='nt' else 'clear'
 RED = 31
 GREEN = 32
 INITIAL_GAP = (0,0)
 Cote = Enum("Cote",["HAUT","GAUCHE","DROITE","BAS"])
 
 
+def clear_screen():
+    if os.name == "posix" :
+        os.system("clear")
+    else:
+        os.system("cls")
+        
 def get_w_and_h(grid):
     return (len(grid[FIRST_ELEMENT])-2)//3,(len(grid)-2)//3
 
@@ -67,8 +72,6 @@ def create_grid(w,h):
     place_square(grid)
     return grid
 
-
-
 def import_card(file_path):
     with open(file_path,'r',encoding="utf-8") as file :
         first_line = file.readline()
@@ -91,7 +94,6 @@ def empty_grid(grid):
     place_square(grid)
 
 def place_tetraminos(tetraminos,grid):
-    w,h = get_w_and_h(grid)
     empty_grid(grid)
     nb_shapes = 0
     for shape in tetraminos :
@@ -132,8 +134,20 @@ def remove_num(text):
 def print_dashed_line(length):
     print("--" * length)
 
+def print_commands():
+    cmd =f"""
+ ╔═══╗   {get_colored_text("↑",95)}   ╔═══╗
+ ║ U ║ ╔═══╗ ║ O ║
+ ╚═══╝ ║ {get_colored_text("i",95)} ║ ╚═══╝
+   ╔═══╬═══╬═══╗
+ {get_colored_text("←",92)} ║ {get_colored_text("j",92)} ║ {get_colored_text("k",93)} ║ {get_colored_text("l",96)} ║ {get_colored_text("→",96)}
+   ╚═══╩═══╩═══╝
+         {get_colored_text("↓",93)}
+    """
+    print(cmd)
+
 def print_grid(grid, no_number):
-    os.system(CLEAR_COMMAND)
+    clear_screen()
     print_dashed_line(len(grid[FIRST_ELEMENT])+1)
     for i in range(len(grid)) :
         print("|",end="")
@@ -168,7 +182,7 @@ def check_win(grid):
 
 def is_int(choice):
     try:
-        answer = int(choice)
+        int(choice)
         is_ok = True
     except :
         is_ok = False
@@ -191,6 +205,7 @@ def is_out_of_bounds(tetramino,gap,grid):
 def make_move(tetraminos,shape,grid):
     tetramino = tetraminos[shape-1]
     print(f"Vous jouez avec la pièce {get_colored_text(f'n° {shape}',tetramino[COLOR_INDEX])} - (v pour verouiller l'emplacement)")
+    print_commands()
     move = getkey()
     placed = False
     bad_emplacement = False
@@ -233,6 +248,7 @@ def make_move(tetraminos,shape,grid):
                 print(get_colored_text("Verouillage impossible. Emplacement non valide.",RED))
                 bad_emplacement = False
         if not placed :
+            print_commands()
             move = getkey()
     return None
 
