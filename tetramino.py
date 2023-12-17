@@ -134,17 +134,16 @@ def remove_num(text):
 def print_dashed_line(length):
     print("--" * length)
 
-def print_commands():
-    cmd =f"""
- ╔═══╗   {get_colored_text("↑",95)}   ╔═══╗
- ║ U ║ ╔═══╗ ║ O ║
- ╚═══╝ ║ {get_colored_text("i",95)} ║ ╚═══╝
-   ╔═══╬═══╬═══╗
- {get_colored_text("←",92)} ║ {get_colored_text("j",92)} ║ {get_colored_text("k",93)} ║ {get_colored_text("l",96)} ║ {get_colored_text("→",96)}
-   ╚═══╩═══╩═══╝
-         {get_colored_text("↓",93)}
-    """
-    print(cmd)
+def print_commands(grid,shape,color):
+    length = 2*len(grid[FIRST_ELEMENT])
+    print(f" ╔══════╗"," " * (length-9-18),f" ╔═══╗   {get_colored_text("↑",95)}   ╔═══╗",sep="")
+    print(f" ║Vous  ║"," " * (length-9-18),f" ║ U ║ ╔═══╗ ║ O ║",sep="")
+    print(f" ║jouez ║"," " * (length-9-18),f" ╚═══╝ ║ {get_colored_text("i",95)} ║ ╚═══╝",sep="")
+    print(f" ║avec  ║"," " * (length-9-18),f"   ╔═══╬═══╬═══╗",sep="")
+    print(f" ║{get_colored_text(f'n° {shape}',color)}  ║"," " * (length-9-18),f" {get_colored_text("←",92)} ║ {get_colored_text("j",92)} ║ {get_colored_text("k",93)} ║ {get_colored_text("l",96)} ║ {get_colored_text("→",96)}",sep="")
+    print(f" ╚══════╝"," " * (length-9-18),f"   ╚═══╩═══╩═══╝",sep="")
+    print(" " * (length-9),f"{get_colored_text("↓",93)}",sep="")
+
 
 def print_grid(grid, no_number):
     clear_screen()
@@ -204,13 +203,12 @@ def is_out_of_bounds(tetramino,gap,grid):
 
 def make_move(tetraminos,shape,grid):
     tetramino = tetraminos[shape-1]
-    print(f"Vous jouez avec la pièce {get_colored_text(f'n° {shape}',tetramino[COLOR_INDEX])} - (v pour verouiller l'emplacement)")
-    print_commands()
+    print_commands(grid,shape,tetramino[COLOR_INDEX])
     move = getkey()
     placed = False
     bad_emplacement = False
-    
     while not placed :
+        bad_key = False
         gap = x,y = tetramino[GAP_INDEX]
         match move[FIRST_ELEMENT] :
             case 'i' | 105 :
@@ -237,14 +235,13 @@ def make_move(tetraminos,shape,grid):
             case "x" | 120:
                 return "x"
             case _ :
-                None
+                bad_key = True
 
-        if not is_out_of_bounds(tetramino,gap,grid):
+        if not is_out_of_bounds(tetramino,gap,grid) and not bad_key:
             tetramino[GAP_INDEX] = gap
             place_tetraminos(tetraminos,grid)
             print_grid(grid,False)
-            print(f"Vous jouez avec la pièce {get_colored_text(f'n° {shape}',tetramino[COLOR_INDEX])} - (v pour verouiller l'emplacement)")
-            print_commands()
+            print_commands(grid,shape,tetramino[COLOR_INDEX])
             if bad_emplacement :
                 print(get_colored_text("Verouillage impossible. Emplacement non valide.",RED))
                 bad_emplacement = False
