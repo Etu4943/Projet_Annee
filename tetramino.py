@@ -23,6 +23,7 @@ Y_INDEX = 1
 RED = 31
 GREEN = 32
 INITIAL_GAP = (0,0)
+COMMANDS_COLOR = "38;5;152"
 Cote = Enum("Cote",["HAUT","GAUCHE","DROITE","BAS"])
 
 
@@ -136,13 +137,13 @@ def print_dashed_line(length):
 
 def print_commands(grid,shape,color):
     length = 2*len(grid[FIRST_ELEMENT])
-    print(f" ╔══════╗"," " * (length-9-18),f" ╔═══╗   {get_colored_text("↑",95)}   ╔═══╗",sep="")
-    print(f" ║Vous  ║"," " * (length-9-18),f" ║ U ║ ╔═══╗ ║ O ║",sep="")
-    print(f" ║jouez ║"," " * (length-9-18),f" ╚═══╝ ║ {get_colored_text("i",95)} ║ ╚═══╝",sep="")
-    print(f" ║avec  ║"," " * (length-9-18),f"   ╔═══╬═══╬═══╗",sep="")
-    print(f" ║{get_colored_text(f'n° {shape}',color)}  ║"," " * (length-9-18),f" {get_colored_text("←",92)} ║ {get_colored_text("j",92)} ║ {get_colored_text("k",93)} ║ {get_colored_text("l",96)} ║ {get_colored_text("→",96)}",sep="")
+    print(f" ╔══════╗"," " * (length-9-18),f" ╔═══╗   {get_colored_text("↑",COMMANDS_COLOR)}   ╔═══╗",sep="")
+    print(f" ║{get_colored_text(f'n° {shape}',color)}  ║"," " * (length-9-18),f" ║ U ║ ╔═══╗ ║ O ║",sep="")
+    print(f" ║      ║"," " * (length-9-18),f" ╚═══╝ ║ {get_colored_text("i",COMMANDS_COLOR)} ║ ╚═══╝",sep="")
+    print(f" ║x:quit║"," " * (length-9-18),f"   ╔═══╬═══╬═══╗",sep="")
+    print(f" ║v:lock║"," " * (length-9-18),f" {get_colored_text("←",COMMANDS_COLOR)} ║ {get_colored_text("j",COMMANDS_COLOR)} ║ {get_colored_text("k",COMMANDS_COLOR)} ║ {get_colored_text("l",COMMANDS_COLOR)} ║ {get_colored_text("→",COMMANDS_COLOR)}",sep="")
     print(f" ╚══════╝"," " * (length-9-18),f"   ╚═══╩═══╩═══╝",sep="")
-    print(" " * (length-9),f"{get_colored_text("↓",93)}",sep="")
+    print(" " * (length-9),f"{get_colored_text("↓",COMMANDS_COLOR)}",sep="")
 
 
 def print_grid(grid, no_number):
@@ -204,50 +205,48 @@ def is_out_of_bounds(tetramino,gap,grid):
 def make_move(tetraminos,shape,grid):
     tetramino = tetraminos[shape-1]
     print_commands(grid,shape,tetramino[COLOR_INDEX])
-    move = getkey()
+    move = getkey().decode("utf-8")
     placed = False
     bad_emplacement = False
-    while not placed :
+    while not placed and (move != "x" and move != 120):
         bad_key = False
         gap = x,y = tetramino[GAP_INDEX]
-        match move[FIRST_ELEMENT] :
-            case 'i' | 105 :
+        match move :
+            case 'i' :
                 gap = (x,y-1)
-            case 'k' | 107:
+            case 'k':
                 gap = (x,y+1)
-            case 'j' | 106:
+            case 'j':
                 gap = (x-1,y)
-            case 'l' | 108:
+            case 'l':
                 gap = (x+1,y)
-            case 'o' | 111:
+            case 'o':
                 rotate_tetramino(tetramino)
                 if is_out_of_bounds(tetramino,gap,grid):
                     rotate_tetramino(tetramino,False)
-            case 'u' | 117:
+            case 'u':
                 rotate_tetramino(tetramino,False)
                 if is_out_of_bounds(tetramino,gap,grid):
                     rotate_tetramino(tetramino)
-            case 'v' | 118 :
+            case 'v':
                 if check_move(tetramino,grid) :
                     placed = True
                 else :
                     bad_emplacement = True
-            case "x" | 120:
-                return "x"
             case _ :
                 bad_key = True
-
-        if not is_out_of_bounds(tetramino,gap,grid) and not bad_key:
-            tetramino[GAP_INDEX] = gap
-            place_tetraminos(tetraminos,grid)
-            print_grid(grid,False)
-            print_commands(grid,shape,tetramino[COLOR_INDEX])
-            if bad_emplacement :
-                print(get_colored_text("Verouillage impossible. Emplacement non valide.",RED))
-                bad_emplacement = False
-        if not placed :
-            move = getkey()
-    return None
+        if move != "x" and move != 120 :
+            if not is_out_of_bounds(tetramino,gap,grid) and not bad_key:
+                tetramino[GAP_INDEX] = gap
+                place_tetraminos(tetraminos,grid)
+                print_grid(grid,False)
+                print_commands(grid,shape,tetramino[COLOR_INDEX])
+                if bad_emplacement :
+                    print(get_colored_text("Verouillage impossible. Emplacement non valide.",RED))
+                    bad_emplacement = False
+            if not placed :
+                move = getkey().decode("utf-8")
+    return move
 
 def tour(grid,tetraminos,nb_pieces,is_first_round=False):
     print_grid(grid, True)
@@ -269,7 +268,8 @@ def main():
     while not check_win(grid) and move != "x" :
         move = tour(grid,tetraminos,nb_pieces)
     
-    print(get_colored_text("Vous avez résolu l'énigme du Tetramino. Félicitations !",GREEN))
+    end_message = get_colored_text("Partie annulée",RED) if move == "x" else get_colored_text("Vous avez résolu l'énigme du Tetramino. Félicitations !",GREEN)
+    print(end_message)
 
 if __name__ == "__main__":
     main()
