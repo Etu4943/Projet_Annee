@@ -236,6 +236,7 @@ def print_commands(grid,shape,color,choosing_shape = False):
         grid : matrice du plateau de jeu
         shape : Un tetramino
         color : Un code couleur de type ab;cd;ef
+        choosing_shape : un booléen signifiant si ce message s'affiche pour le choix d'une pièce ou non
     Fonctionnement :
         Affiche de manière stylisée les commandes disponibles
     Return :
@@ -329,7 +330,7 @@ def choose_shape(nb_shapes):
     """
     choice = getkey()
     stop_game = False
-    while not is_game_canceled(choice[FIRST_ELEMENT]) and not ( is_int(choice) or int(choice) < 1 or int(choice) > nb_shapes) :
+    while not is_game_canceled(choice[FIRST_ELEMENT]) and ( not is_int(choice) or int(choice) < 1 or int(choice) > nb_shapes) :
         choice = getkey()
         
     if is_game_canceled(choice[FIRST_ELEMENT]) :
@@ -436,6 +437,7 @@ def tour(grid,tetraminos,nb_pieces,is_first_round=False):
 
 def main():
     carte = sys.argv[1]
+    os.system("MODE 0,50")
     size, tetraminos = import_card(carte)
     grid = create_grid(*size)
     nb_pieces = len(tetraminos)
