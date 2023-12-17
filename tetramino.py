@@ -244,11 +244,11 @@ def make_move(tetraminos,shape,grid):
             place_tetraminos(tetraminos,grid)
             print_grid(grid,False)
             print(f"Vous jouez avec la pièce {get_colored_text(f'n° {shape}',tetramino[COLOR_INDEX])} - (v pour verouiller l'emplacement)")
+            print_commands()
             if bad_emplacement :
                 print(get_colored_text("Verouillage impossible. Emplacement non valide.",RED))
                 bad_emplacement = False
         if not placed :
-            print_commands()
             move = getkey()
     return None
 
