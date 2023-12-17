@@ -34,12 +34,32 @@ def clear_screen():
         os.system("cls")
         
 def get_w_and_h(grid):
+    """
+    Input :
+        grid : matrice du plateau de jeu
+    Return :
+        Renvoie la longueur et la largeur d'origine
+    """
     return (len(grid[FIRST_ELEMENT])-2)//3,(len(grid)-2)//3
 
 def get_colored_text(text,color):
+    """
+    Input :
+        text : Un message texte
+        color : Le code couleur désiré
+    Return :
+        Renvoie une le message texte formatée avec la couleur
+    """
     return f"\x1b[{color}m{text}\x1b[0m"
 
 def square_side(i,j,w,h):
+    """
+    Input :
+        i, j : Les coordonées x,y d'où on se trouve sur la matrice
+        w, h : longuer et largeur d'origine du plateau de jeu
+    Return :
+        Renvoie, si on est dessus, le coté du rectangle central sur lequel on est, via une énumération
+    """
     side = None
     if i == h and j >= w+1 and j <= 2*w:
         side = Cote.HAUT
@@ -52,6 +72,14 @@ def square_side(i,j,w,h):
     return side
 
 def place_square(grid):
+    """
+    Input :
+        grid : matrice du plateau de jeu
+    Fonctionnement :
+        Rajoute le rectangle central à la grille vierge
+    Return :
+        None
+    """
     w,h = get_w_and_h(grid)
     for i in range(3*h+2):
         for j in range(3*w+2):
@@ -69,11 +97,24 @@ def place_square(grid):
                     None
 
 def create_grid(w,h):
+    """
+    Input :
+        w, h : Longueur et largeur d'origine du plateau
+    Return :
+        Renvoie une matrice w x h composée de "  "
+    """
     grid = [["  " for _ in range(3*w+2)] for _ in range(3*h+2)]
     place_square(grid)
     return grid
 
 def import_card(file_path):
+    """
+    Input :
+        file_path : chaine de caractère désignant le chemin d'accès de la carte de jeu
+    return :
+        (w,h) : Tuple contenant la longeur et la largeur d'origine (première ligne du fichier)
+        shapes : Liste de tetramino composée de telle sorte : [positions, couleur, déplacement]
+    """
     with open(file_path,'r',encoding="utf-8") as file :
         first_line = file.readline()
         shapes_lines = file.readlines()
@@ -88,6 +129,14 @@ def import_card(file_path):
     return ((w,h),shapes)
 
 def empty_grid(grid):
+    """
+    Input :
+        grid : matrice du plateau de jeu
+    Fonctionnement :
+        Vide la grille de tout élément si ce n'est le rectangle central
+    Return :
+        none
+    """
     for i in range(len(grid)):
         for j in range(len(grid[FIRST_ELEMENT])):
             if not "|" in grid[i][j] and not "-" in grid[i][j]:
@@ -95,6 +144,13 @@ def empty_grid(grid):
     place_square(grid)
 
 def place_tetraminos(tetraminos,grid):
+    """
+    Input :
+        tetraminos : Liste comprenant tout les tetraminos
+        grid : matrice du plateau de jeu
+    Return :
+        Renvoie la grille une fois modifiée après avoir placé les tetraminos
+    """
     empty_grid(grid)
     nb_shapes = 0
     for shape in tetraminos :
@@ -105,6 +161,14 @@ def place_tetraminos(tetraminos,grid):
     return grid
 
 def setup_tetraminos(tetraminos,grid):
+    """
+    Input :
+        tetraminos : Liste comprenant tout les tetraminos
+        grid : matrice du plateau de jeu
+    Return :
+        grid : la grille modifiée via place_tetraminos()
+        tetraminos : la liste de tetraminos
+    """
     w,h = get_w_and_h(grid)
     for shape in tetraminos :
         nb_shapes = tetraminos.index(shape)
@@ -120,12 +184,25 @@ def setup_tetraminos(tetraminos,grid):
 
 
 def rotate_tetramino(tetramino,clockwise = True):
+    """
+    Input :
+        tetramino : Un tetramino de type [positions, couleur, déplacement]
+        clockwise = True : Une booléen désignant si la forme doit tourner dans le sens horaire ou non
+    Return :
+        Renvoie la forme une fois tournée
+    """
     for i in range(len(tetramino[POSITION_INDEX])):
         x,y = tetramino[POSITION_INDEX][i][X_INDEX],tetramino[POSITION_INDEX][i][Y_INDEX]
         tetramino[POSITION_INDEX][i] = (-y,x) if clockwise else (y,-x)
     return tetramino
 
 def remove_num(text):
+    """
+    Input :
+        text : Une chaine de caractère formatée avec une couleur
+    Return :
+        Renvoie la chaine de caractère ayant remplacée le numéro par des espaces
+    """
     if "XX" not in text:
         index = text.find(" ") - 1
         text = list(text)
@@ -133,9 +210,27 @@ def remove_num(text):
     return ''.join(text)
 
 def print_dashed_line(length):
+    """
+    Input :
+        length : longeur souhaitée
+    Fonctionnement :
+        Imprime une ligne de "--" de longeur length
+    Return :
+        None
+    """
     print("--" * length)
 
 def print_commands(grid,shape,color):
+    """
+    Input :
+        grid : matrice du plateau de jeu
+        shape : Un tetramino
+        color : Un code couleur de type ab;cd;ef
+    Fonctionnement :
+        Affiche de manière stylisée les commandes disponibles
+    Return :
+        None
+    """
     length = 2*len(grid[FIRST_ELEMENT])
     print(f" ╔══════╗"," " * (length-9-18),f" ╔═══╗   {get_colored_text("↑",COMMANDS_COLOR)}   ╔═══╗",sep="")
     print(f" ║{get_colored_text(f'n° {shape}',color)}  ║"," " * (length-9-18),f" ║ U ║ ╔═══╗ ║ O ║",sep="")
@@ -147,6 +242,15 @@ def print_commands(grid,shape,color):
 
 
 def print_grid(grid, no_number):
+    """
+    Input :
+        grid : matrice du plateau de jeu
+        no_number : 
+    Fonctionnement :
+        Affiche le plateau de jeu
+    Return :
+        None
+    """
     clear_screen()
     print_dashed_line(len(grid[FIRST_ELEMENT])+1)
     for i in range(len(grid)) :
@@ -161,6 +265,13 @@ def print_grid(grid, no_number):
     print_dashed_line(len(grid[FIRST_ELEMENT])+1)
 
 def check_move(tetramino, grid):
+    """
+    Input :
+        tetramino : Un tetramino de type [positions, couleur, déplacement]
+        grid : matrice du plateau de jeu
+    Return :
+        is_valid : Une valeur booléenne vérifiant que la pièce ne chevauceh rien d'autre
+    """
     is_valid = True
     for x,y in tetramino[POSITION_INDEX] :
         x += tetramino[GAP_INDEX][X_INDEX]
@@ -172,6 +283,12 @@ def check_move(tetramino, grid):
 
 
 def check_win(grid):
+    """
+    Input :
+        grid : matrice du plateau de jeu
+    Return :
+        Renvoie un booléen vérifiant que chaque case comprise dans mon rectangle centrale est remplie
+    """
     w,h = get_w_and_h(grid)
     somme = 0
     for i in range(len(grid)) :
@@ -181,6 +298,12 @@ def check_win(grid):
     return somme == w * h
 
 def is_int(choice):
+    """
+    Input :
+        choice : un input
+    Return :
+        Renvoie si l'input peut être casté de type int
+    """
     try:
         int(choice)
         is_ok = True
@@ -189,24 +312,54 @@ def is_int(choice):
     return is_ok
 
 def choose_shape(nb_shapes):
+    """
+    Input :
+        nb_Shapes : Le nombre de tetramino dans le jeu
+    Return :
+        Renvoie le numéro de pièce choisi 
+    """
     print("Veuillez choisir une pièce : ")
     choice = getkey()
     while  not is_int(choice) or int(choice) < 1 or int(choice) > nb_shapes :
         choice = getkey()
     return int(choice)
 
-def is_out_of_bounds(tetramino,gap,grid):
+def is_out_of_bounds(tetramino,gap_x,gap_y,grid):
+    """
+    Input :
+        tetramino : Une pièce de la liste des tetraminos
+        gap_X, gap_y : Un déplacement potentiel pour cette pièce
+        grid : matrice du plateau de jeu
+    Return :
+        is_out : UN booléen désignant si la pièce serait hors-borne ou non
+    """
     is_out = False
     for x,y in tetramino[POSITION_INDEX] :
-        if not (0 <= x + gap[X_INDEX] < len(grid[FIRST_ELEMENT])) or not (0 <= y + gap[Y_INDEX] < (len(grid))):
+        if not (0 <= x + gap_x < len(grid[FIRST_ELEMENT])) or not (0 <= y + gap_y < (len(grid))):
             is_out = True
     return is_out
 
 
 def is_game_canceled(move):
+    """
+    Input :
+        move : Un input
+    Return :
+        Renvoie un booleen en fonction de si le joueur à choisi d'arreter la partie
+    """
     return move == "x" or move == 120
 
 def make_move(tetraminos,shape,grid):
+    """
+    Input :
+        tetraminos : La liste des tetraminos
+        shape : L'indice de la pièce en cours de déplacement
+        grid : Matrice du plateau de jeu
+    Fonctionnement :
+        Demande en boucle les inputs gérant le déplacement jusqu'à ce que la pièce soit placée, ou la partie annulée
+    Return :
+        Renvoie le dernier input de l'utilisateur en fin de boucle (v si pièce placée, x si partie annulée)
+    """
     tetramino = tetraminos[shape-1]
     print_commands(grid,shape,tetramino[COLOR_INDEX])
     move = getkey()[FIRST_ELEMENT]
@@ -226,11 +379,11 @@ def make_move(tetraminos,shape,grid):
                 gap = (x+1,y)
             case 'o' | 111:
                 rotate_tetramino(tetramino)
-                if is_out_of_bounds(tetramino,gap,grid):
+                if is_out_of_bounds(tetramino,*gap,grid):
                     rotate_tetramino(tetramino,False)
             case 'u' | 117:
                 rotate_tetramino(tetramino,False)
-                if is_out_of_bounds(tetramino,gap,grid):
+                if is_out_of_bounds(tetramino,*gap,grid):
                     rotate_tetramino(tetramino)
             case 'v' | 118 :
                 if check_move(tetramino,grid) :
@@ -239,20 +392,29 @@ def make_move(tetraminos,shape,grid):
                     bad_emplacement = True
             case _ :
                 bad_key = True
-        if move != "x" and move != 120 :
-            if not is_out_of_bounds(tetramino,gap,grid) and not bad_key:
-                tetramino[GAP_INDEX] = gap
-                place_tetraminos(tetraminos,grid)
-                print_grid(grid,False)
-                print_commands(grid,shape,tetramino[COLOR_INDEX])
-                if bad_emplacement :
-                    print(get_colored_text("Verouillage impossible. Emplacement non valide.",RED))
-                    bad_emplacement = False
-            if not placed :
-                move = getkey()[FIRST_ELEMENT]
+        if not is_out_of_bounds(tetramino,*gap,grid) and not bad_key:
+            tetramino[GAP_INDEX] = gap
+            place_tetraminos(tetraminos,grid)
+            print_grid(grid,False)
+            print_commands(grid,shape,tetramino[COLOR_INDEX])
+            if bad_emplacement :
+                print(get_colored_text("Verouillage impossible. Emplacement non valide.",RED))
+                bad_emplacement = False
+        if not placed :
+            move = getkey()[FIRST_ELEMENT]
     return move
 
 def tour(grid,tetraminos,nb_pieces,is_first_round=False):
+    """
+    Input :
+        grid = Matrice du plateau de jeu
+        tetraminos : Liste des tetraminos
+        is_first_round = False : Booleen si c'est le premier tour de jeu
+    Fonctionnement :
+        affichage de la grille, demande de la pièce, déplacement
+    Return :
+        Renvoie le dernier input (x ou v)
+    """
     print_grid(grid, True)
     if not is_first_round :
         print(get_colored_text("Vous avez vérouillé l'emplacement.",GREEN))
